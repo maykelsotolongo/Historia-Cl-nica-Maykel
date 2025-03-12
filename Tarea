@@ -14,3 +14,241 @@ private double estatura;
 private String direccion;
 private List imagenes;
 private List enfermedades;
+
+public Paciente(String ci, String nombre, LocalDate fechaNacimiento, String sexo, 
+               double peso, double estatura, String direccion) {
+    this.ci = ci;
+    this.nombre = nombre;
+    this.fechaNacimiento = fechaNacimiento;
+    this.sexo = sexo;
+    this.peso = peso;
+    this.estatura = estatura;
+    this.direccion = direccion;
+    this.imagenes = new ArrayList<>();
+    this.enfermedades = new ArrayList<>();
+}
+
+// Getters y Setters
+
+public void agregarImagen(AnalisisImagen imagen) {
+    imagenes.add(imagen);
+}
+
+public boolean eliminarImagen(String nombreArchivo) {
+    return imagenes.removeIf(img -> img.getNombreArchivo().equals(nombreArchivo));
+}
+
+public void agregarEnfermedad(Enfermedad enfermedad) {
+    enfermedades.add(enfermedad);
+}
+
+public boolean eliminarEnfermedad(String nombreEnfermedad, LocalDate fecha) {
+    return enfermedades.removeIf(e -> 
+        e.getNombre().equalsIgnoreCase(nombreEnfermedad) && 
+        e.getFecha().equals(fecha));
+}
+
+2-Clase AnalisisImagen
+
+import java.time.LocalDate;
+
+public class AnalisisImagen {
+private String nombreArchivo;
+private LocalDate fecha;
+private String tipoImagen;
+private String comentarios;
+
+public AnalisisImagen(String nombreArchivo, LocalDate fecha, 
+                     String tipoImagen, String comentarios) {
+    this.nombreArchivo = nombreArchivo;
+    this.fecha = fecha;
+    this.tipoImagen = tipoImagen;
+    this.comentarios = comentarios;
+}
+
+// Getters y Setters
+}
+
+3-Clase Enfermedad
+
+import java.time.LocalDate;
+
+public class Enfermedad {
+private String nombre;
+private LocalDate fecha;
+private String tratamiento;
+
+public Enfermedad(String nombre, LocalDate fecha, String tratamiento) {
+    this.nombre = nombre;
+    this.fecha = fecha;
+    this.tratamiento = tratamiento;
+}
+
+// Getters y Setters
+} 
+
+4-Clase GestorHospital
+
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class GestorHospital {
+private Map<String, Paciente> pacientes;
+private Set archivosImagenes;
+public GestorHospital() {
+    pacientes = new HashMap<>();
+    archivosImagenes = new HashSet<>();
+}
+
+// Operación 1: Buscar paciente por CI
+public String buscarPaciente(String ci) {
+    Paciente paciente = pacientes.get(ci);
+    if (paciente == null) return "Paciente no encontrado";
+    
+    return String.format(
+        "Nombre: %s\nSexo: %s\nPeso: %.2f\nEstatura: %.2f\nImágenes: %d\nEnfermedades: %d",
+        paciente.getNombre(),
+        paciente.getSexo(),
+        paciente.getPeso(),
+        paciente.getEstatura(),
+        paciente.getImagenes().size(),
+        paciente.getEnfermedades().size()
+    );
+}
+
+// Operación 2: Obtener CIs de pacientes más altos
+public List<String> obtenerPacientesMasAltos() {
+    if (pacientes.isEmpty()) return Collections.emptyList();
+    
+    double maxAltura = pacientes.values().stream()
+        .mapToDouble(Paciente::getEstatura)
+        .max().getAsDouble();
+        
+    return pacientes.values().stream()
+        .filter(p -> p.getEstatura() == maxAltura)
+        .map(Paciente::getCi)
+        .collect(Collectors.toList());
+}
+
+// Operación 3: Contar mujeres con dengue
+public long contarMujeresConDengue() {
+    return pacientes.values().stream()
+        .filter(p -> p.getSexo().equalsIgnoreCase("femenino") && 
+            p.getEnfermedades().stream()
+                .anyMatch(e -> e.getNombre().equalsIgnoreCase("dengue")))
+        .count();
+}
+
+// Operación 4: Ordenar pacientes
+public List<Paciente> ordenarPorNombre() {
+    return pacientes.values().stream()
+        .sorted(Comparator.comparing(Paciente::getNombre))
+        .collect(Collectors.toList());
+}
+
+public List<Paciente> ordenarPorPeso() {
+    return pacientes.values().stream()
+        .sorted((p1, p2) -> Double.compare(p2.getPeso(), p1.getPeso()))
+        .collect(Collectors.toList());
+}
+
+// CRUD Pacientes
+public boolean agregarPaciente(Paciente p) {
+    if (pacientes.containsKey(p.getCi())) return false;
+    pacientes.put(p.getCi(), p);
+    return true;
+}
+
+public boolean eliminarPaciente(String ci) {
+    Paciente eliminado = pacientes.remove(ci);
+    if (eliminado != null) {
+        eliminado.getImagenes().forEach(img -> 
+            archivosImagenes.remove(img.getNombreArchivo()));
+        return true;
+    }
+    return false;
+}
+
+// Gestión de imágenes
+public boolean agregarImagen(String ci, AnalisisImagen imagen) {
+    if (!pacientes.containsKey(ci) || 
+        archivosImagenes.contains(imagen.getNombreArchivo())) return false;
+        
+    pacientes.get(ci).agregarImagen(imagen);
+    archivosImagenes.add(imagen.getNombreArchivo());
+    return true;
+  }
+
+}
+
+Diagrama de clases UML
+
+@startuml
+class Paciente {
+- ci: String
+- nombre: String
+- fechaNacimiento: LocalDate
+- sexo: String
+- peso: double
+- estatura: double
+- direccion: String
+- imagenes: List
+- enfermedades: List
+--
++ Paciente(ci: String, nombre: String, fechaNac: LocalDate, sexo: String,
+peso: double, estatura: double, direccion: String)
++ agregarImagen(imagen: AnalisisImagen): void
++ eliminarImagen(nombreArchivo: String): boolean
++ agregarEnfermedad(enfermedad: Enfermedad): void
++ eliminarEnfermedad(nombreEnfermedad: String, fecha: LocalDate): boolean
++ getters/setters()
+}
+
+
+
+class AnalisisImagen {
+- nombreArchivo: String
+- fecha: LocalDate
+- tipoImagen: String
+- comentarios: String
+--
++ AnalisisImagen(nombreArchivo: String, fecha: LocalDate,
+tipoImagen: String, comentarios: String)
++ getters/setters()
+}
+
+
+
+class Enfermedad {
+- nombre: String
+- fecha: LocalDate
+- tratamiento: String
+--
++ Enfermedad(nombre: String, fecha: LocalDate, tratamiento: String)
++ getters/setters()
+}
+
+
+
+
+class GestorHospital {
+- pacientes: Map<String, Paciente>
+- archivosImagenes: Set
+--
++ buscarPaciente(ci: String): String
++ obtenerPacientesMasAltos(): List
++ contarMujeresConDengue(): long
++ ordenarPorNombre(): List
++ ordenarPorPeso(): List
++ agregarPaciente(p: Paciente): boolean
++ eliminarPaciente(ci: String): boolean
++ agregarImagen(ci: String, imagen: AnalisisImagen): boolean
+} 
+
+
+
+Paciente "1" -- "0.." AnalisisImagen : contiene
+Paciente "1" -- "0.." Enfermedad : contiene
+GestorHospital "1" o-- "0..*" Paciente : gestiona
+@enduml
