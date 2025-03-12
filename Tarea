@@ -1,0 +1,16 @@
+# Historia-Cl-nica-Maykel
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Paciente {
+private String ci;
+private String nombre;
+private LocalDate fechaNacimiento;
+private String sexo;
+private double peso;
+private double estatura;
+private String direccion;
+private List imagenes;
+private List enfermedades;
